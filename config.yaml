@@ -1,0 +1,7 @@
+database:
+  dbname: "booking"
+  password: "mark"
+  port: "5434"
+  host: "db"
+  sslmode: "disable"
+  username: "postgres"

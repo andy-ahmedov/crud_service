@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  db:
+    build: ./
+    container_name: books
+    ports:
+    - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mark
+      - POSTGRES_DB=booking
+      - SSL_MODE=disable

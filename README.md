@@ -1,1 +1,52 @@
 # crud_service
+
+ CRUD приложение для управления списком книг
+
+ Должно быть:
+
+	Книжный репозиторий
+	Сервис книг
+	Rest Сервер
+
+Book:
+	id int
+	titile string
+	author string
+	publishDate time.Time
+	rating int
+
+UpdateBookInput:
+	titile string
+	author sttring
+	publishDate time.Time
+	rating int
+
+Ошибка: Book not found
+
+Book interface {
+	Create(ctx context.Context, book domain.Book) error
+	GetByID(ctx context.Context, id int64) (domain.Book, error)
+	GetAll(ctx context.Context) ([]domain.Book, error)
+	Delete(ctx context.Context, id int64) error
+	Update(ctx context.Context, id int64, inp domain.UpdateBookInput) error
+}
+
+Handles:
+	createBook
+	getAllBooks
+	getBookByID
+	deleteBook
+	updateBook
+
+PSQL:
+	PostgresConnection
+
+Структура проекта:
+
+	CMD - исполняемый файл
+	Internal:
+		Domain - описание структур
+		Repository/psql - создание структуры и ее методов на основе выбранной базы данных
+		Service - Создание интерфейса и реализация ее методов
+		Transport/Rest - Инициализация маршрутизация и интеграция с интерфейсом + middleware
+	PKG - подключение к драйверу Базы Данных
