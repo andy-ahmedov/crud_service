@@ -23,6 +23,7 @@ UpdateBookInput:
 
 Ошибка: Book not found
 
+<pre>
 Book interface {
 	Create(ctx context.Context, book domain.Book) error
 	GetByID(ctx context.Context, id int64) (domain.Book, error)
@@ -30,6 +31,7 @@ Book interface {
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, id int64, inp domain.UpdateBookInput) error
 }
+</pre>
 
 Handles:
 	createBook
