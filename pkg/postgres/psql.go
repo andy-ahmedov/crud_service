@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/jackc/pgx/v5"
@@ -25,6 +26,12 @@ func ConnectToDB() (*pgx.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = conn.Ping(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("CONNECTED")
 
 	return conn, err
 }

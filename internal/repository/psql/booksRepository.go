@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	domain "github.com/andy-ahmedov/crud_service/internal/Domain"
+	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
