@@ -12,6 +12,13 @@ import (
 	"github.com/andy-ahmedov/crud_service/pkg/postgres"
 )
 
+// @title CRUD-service
+// @version 1.2
+// @description Service implementing crud operations
+
+// @host localhost:8080
+// @BasePath /
+
 func main() {
 	db, err := postgres.ConnectToDB()
 	if err != nil {

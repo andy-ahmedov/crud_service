@@ -1,0 +1,191 @@
+basePath: /
+definitions:
+  domain.Book:
+    properties:
+      author:
+        type: string
+      id:
+        type: integer
+      publish_date:
+        type: string
+      rating:
+        type: integer
+      title:
+        type: string
+    type: object
+  domain.UpdateBookInput:
+    properties:
+      author:
+        type: string
+      publish_date:
+        type: string
+      rating:
+        type: integer
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Service implementing crud operations
+  title: CRUD-service
+  version: "1.2"
+paths:
+  /books:
+    get:
+      description: Getting all books.
+      operationId: get-all-books
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Book'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: getAllBooks
+      tags:
+      - books
+    post:
+      consumes:
+      - application/json
+      description: Adding a book to the database.
+      operationId: add-book
+      parameters:
+      - description: Book information
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Book'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: CreateBook
+      tags:
+      - books
+  /books/id:
+    delete:
+      consumes:
+      - application/json
+      description: Deleting a book by ID.
+      operationId: delete-book
+      parameters:
+      - description: book id
+        in: body
+        name: id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: deleteBook
+      tags:
+      - id
+    get:
+      consumes:
+      - application/json
+      description: Retrieving a book by ID.
+      operationId: get-book-by-id
+      parameters:
+      - description: book id
+        in: body
+        name: id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Book'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: getBookByID
+      tags:
+      - id
+    put:
+      consumes:
+      - application/json
+      description: Updating book data by ID.
+      operationId: update-book
+      parameters:
+      - description: Book update information
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateBookInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: updateBook
+      tags:
+      - id
+swagger: "2.0"
