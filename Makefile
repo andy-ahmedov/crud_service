@@ -13,3 +13,6 @@ stop_and_delete_container:
 
 create_table:
 	docker exec -it books psql -U postgres -d booking -c "\i script.sql"
+
+swag:
+	swag init -g cmd/app/main.go
