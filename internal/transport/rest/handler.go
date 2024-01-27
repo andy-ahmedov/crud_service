@@ -2,16 +2,15 @@ package rest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/andy-ahmedov/crud_service/internal/service"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
@@ -24,150 +23,111 @@ func NewHandler(books service.BooksInterface) *Handler {
 	}
 }
 
-func (h Handler) InitRouter() *mux.Router {
-	r := mux.NewRouter()
-	r.Use(loggingMiddleware)
+func (h Handler) InitGinRouter() *gin.Engine {
+	router := gin.Default()
 
-	books := r.PathPrefix("/books").Subrouter()
-	{
-		books.HandleFunc("", h.createBook).Methods(http.MethodPost)
-		books.HandleFunc("", h.getAllBooks).Methods(http.MethodGet)
-		books.HandleFunc("/{id:[0-9]+}", h.getBookByID).Methods(http.MethodGet)
-		books.HandleFunc("/{id:[0-9]+}", h.deleteBook).Methods(http.MethodDelete)
-		books.HandleFunc("/{id:[0-9]+}", h.updateBook).Methods(http.MethodPut)
-	}
+	router.POST("/books", h.createBook)
+	router.GET("/books", h.getAllBooks)
+	router.GET("/books/:id", h.getBookByID)
+	router.DELETE("/books/:id", h.deleteBook)
+	router.PUT("books/:id", h.updateBook)
 
-	return r
+	router.Run()
+
+	return router
 }
 
-func (h *Handler) createBook(w http.ResponseWriter, r *http.Request) {
-	reqBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
+func (h Handler) createBook(c *gin.Context) {
 	var book domain.Book
 
-	err = json.Unmarshal(reqBytes, &book)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = h.booksService.Create(context.TODO(), &book)
+	err := h.booksService.Create(context.TODO(), &book)
 	if err != nil {
-		log.Println("createBook() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("ginCreateBook() error: ", err)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s\n", err))
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	c.String(http.StatusOK, "The data has been successfully written.\n")
 }
 
-func (h *Handler) getAllBooks(w http.ResponseWriter, r *http.Request) {
-	books, err := h.booksService.GetAll(context.TODO())
+func (h *Handler) getAllBooks(c *gin.Context) {
+	books, err := h.booksService.GetAll(c)
 	if err != nil {
-		log.Println("getAllBooks() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("ginGetAllBooks() error:", err)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s\n", err))
 		return
 	}
 
-	response, err := json.Marshal(books)
-	if err != nil {
-		log.Println("getAllBooks() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(response)
+	c.JSON(http.StatusOK, books)
 }
 
-func (h *Handler) getBookByID(w http.ResponseWriter, r *http.Request) {
-	id, err := getIDFromRequest(r)
+func (h *Handler) getBookByID(c *gin.Context) {
+	id, err := getIDFromRequest(c.Param("id"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s\n", err))
 		return
 	}
 
 	book, err := h.booksService.GetByID(context.TODO(), id)
 	if err != nil {
 		if errors.Is(err, domain.ErrBookNotFound) {
-			w.WriteHeader(http.StatusBadRequest)
+			c.String(http.StatusBadRequest, fmt.Sprintf("error: %s\n", err))
 			return
 		}
 		log.Println("getByID() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s\n", err))
 		return
 	}
 
-	response, err := json.Marshal(book)
-	if err != nil {
-		log.Println("getBookByID() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(response)
+	c.JSON(http.StatusOK, book)
 }
 
-func (h *Handler) deleteBook(w http.ResponseWriter, r *http.Request) {
-	id, err := getIDFromRequest(r)
+func (h *Handler) deleteBook(c *gin.Context) {
+	id, err := getIDFromRequest(c.Param("id"))
 	if err != nil {
-		log.Println("deleteBook() error:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s\n", err))
 		return
 	}
 
 	err = h.booksService.Delete(context.TODO(), id)
 	if err != nil {
-		log.Println("deleteBook() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s\n", err))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	c.String(http.StatusOK, "The row with the given ID was successfully deleted.\n")
 }
 
-func (h *Handler) updateBook(w http.ResponseWriter, r *http.Request) {
-	reqBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println("updateBook() error:", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
+func (h *Handler) updateBook(c *gin.Context) {
 	var updBook domain.UpdateBookInput
 
-	err = json.Unmarshal(reqBytes, &updBook)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&updBook); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	id, err := getIDFromRequest(r)
+	id, err := getIDFromRequest(c.Param("id"))
 	if err != nil {
-		log.Println("updateBook() error:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = h.booksService.Update(context.TODO(), id, updBook)
 	if err != nil {
-		log.Println("updateBook() error:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Oups(( error: %s\n", err))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	c.String(http.StatusOK, "The book with the given ID has been successfully updated.\n")
 }
 
-func getIDFromRequest(r *http.Request) (int64, error) {
-	vars := mux.Vars(r)
-
-	id, err := strconv.ParseInt(vars["id"], 10, 64)
+func getIDFromRequest(param string) (int64, error) {
+	id, err := strconv.ParseInt(param, 10, 64)
 	if err != nil {
 		return 0, err
 	}

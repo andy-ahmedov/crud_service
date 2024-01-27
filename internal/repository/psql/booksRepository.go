@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -86,19 +87,24 @@ func (b *Books) Update(ctx context.Context, id int64, upd domain.UpdateBookInput
 		argId++
 	}
 
-	if upd.Title != nil {
+	if upd.Author != nil {
 		setValues = append(setValues, fmt.Sprintf("author=$%d", argId))
 		args = append(args, *upd.Author)
 		argId++
 	}
 
-	if upd.Title != nil {
+	if upd.PublishDate != nil {
 		setValues = append(setValues, fmt.Sprintf("publish_date=$%d", argId))
 		args = append(args, *upd.PublishDate)
 		argId++
+	} else {
+		t := time.Now()
+		setValues = append(setValues, fmt.Sprintf("publish_date=$%d", argId))
+		args = append(args, &t)
+		argId++
 	}
 
-	if upd.Title != nil {
+	if upd.Rating != nil {
 		setValues = append(setValues, fmt.Sprintf("rating=$%d", argId))
 		args = append(args, *upd.Rating)
 		argId++
@@ -106,7 +112,6 @@ func (b *Books) Update(ctx context.Context, id int64, upd domain.UpdateBookInput
 
 	setQuery := strings.Join(setValues, ", ")
 	query := fmt.Sprintf("UPDATE books SET %s WHERE id=$%d", setQuery, argId)
-	fmt.Println(query)
 	args = append(args, id)
 
 	_, err := b.db.Exec(ctx, query, args...)

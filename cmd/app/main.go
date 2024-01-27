@@ -25,7 +25,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: handler.InitRouter(),
+		Handler: handler.InitGinRouter(),
 	}
 
 	log.Println("SERVER STARTED AT", time.Now().Format(time.RFC3339))
