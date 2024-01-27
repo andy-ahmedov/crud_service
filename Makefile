@@ -4,7 +4,7 @@ run:
 	go run cmd/app/main.go
 
 up:
-	docker-compose up db
+	docker-compose up -d db
 
 stop_and_delete_container:
 	docker stop books
