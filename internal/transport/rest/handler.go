@@ -83,7 +83,6 @@ func (h Handler) createBook(c *gin.Context) {
 func (h *Handler) getAllBooks(c *gin.Context) {
 	books, err := h.booksService.GetAll(c)
 	if err != nil {
-		// log.Println("ginGetAllBooks() error:", err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
