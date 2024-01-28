@@ -2,8 +2,12 @@
     "swagger": "2.0",
     "info": {
         "description": "Service implementing crud operations",
-        "title": "CRUD-service",
-        "contact": {},
+        "title": "CRUD API Service",
+        "contact": {
+            "name": "Andy Ahmedov",
+            "url": "https://github.com/andy-ahmedov",
+            "email": "andy.ahmedov@gmail.com"
+        },
         "version": "1.2"
     },
     "host": "localhost:8080",
@@ -22,7 +26,7 @@
                 "operationId": "get-all-books",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Books have been successfully received.",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -33,7 +37,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -64,7 +68,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "The data has been successfully written.",
                         "schema": {
                             "type": "string"
                         }
@@ -72,47 +76,36 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
             }
         },
-        "/books/id": {
+        "/books/{id}": {
             "get": {
-                "description": "Retrieving a book by ID.",
+                "description": "Retrieves a book by ID. If the book is not found, returns an error.",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "id"
-                ],
-                "summary": "getBookByID",
+                "summary": "GetBookByID",
                 "operationId": "get-book-by-id",
                 "parameters": [
                     {
-                        "description": "book id",
+                        "type": "integer",
+                        "description": "Book ID",
                         "name": "id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -125,19 +118,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -157,8 +144,15 @@
                 "operationId": "update-book",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Book update information",
-                        "name": "input",
+                        "name": "updateBook",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -176,19 +170,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -208,18 +196,16 @@
                 "operationId": "delete-book",
                 "parameters": [
                     {
-                        "description": "book id",
+                        "type": "integer",
+                        "description": "Book ID",
                         "name": "id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "The data has been successfully written.",
                         "schema": {
                             "type": "string"
                         }
@@ -227,19 +213,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -280,6 +260,14 @@
                     "type": "integer"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "rest.errResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }

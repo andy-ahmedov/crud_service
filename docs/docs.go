@@ -9,7 +9,11 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "Andy Ahmedov",
+            "url": "https://github.com/andy-ahmedov",
+            "email": "andy.ahmedov@gmail.com"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -28,7 +32,7 @@ const docTemplate = `{
                 "operationId": "get-all-books",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Books have been successfully received.",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -39,7 +43,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -70,7 +74,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "The data has been successfully written.",
                         "schema": {
                             "type": "string"
                         }
@@ -78,47 +82,36 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
             }
         },
-        "/books/id": {
+        "/books/{id}": {
             "get": {
-                "description": "Retrieving a book by ID.",
+                "description": "Retrieves a book by ID. If the book is not found, returns an error.",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "id"
-                ],
-                "summary": "getBookByID",
+                "summary": "GetBookByID",
                 "operationId": "get-book-by-id",
                 "parameters": [
                     {
-                        "description": "book id",
+                        "type": "integer",
+                        "description": "Book ID",
                         "name": "id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -131,19 +124,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -163,8 +150,15 @@ const docTemplate = `{
                 "operationId": "update-book",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Book update information",
-                        "name": "input",
+                        "name": "updateBook",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -182,19 +176,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -214,18 +202,16 @@ const docTemplate = `{
                 "operationId": "delete-book",
                 "parameters": [
                     {
-                        "description": "book id",
+                        "type": "integer",
+                        "description": "Book ID",
                         "name": "id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "The data has been successfully written.",
                         "schema": {
                             "type": "string"
                         }
@@ -233,19 +219,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.errResponse"
                         }
                     }
                 }
@@ -289,6 +269,14 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "rest.errResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`
@@ -299,7 +287,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "CRUD-service",
+	Title:            "CRUD API Service",
 	Description:      "Service implementing crud operations",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -12,9 +12,13 @@ import (
 	"github.com/andy-ahmedov/crud_service/pkg/postgres"
 )
 
-// @title CRUD-service
+// @title CRUD API Service
 // @version 1.2
 // @description Service implementing crud operations
+
+// @contact.name Andy Ahmedov
+// @contact.url https://github.com/andy-ahmedov
+// @contact.email andy.ahmedov@gmail.com
 
 // @host localhost:8080
 // @BasePath /

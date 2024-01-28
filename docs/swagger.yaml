@@ -24,11 +24,19 @@ definitions:
       title:
         type: string
     type: object
+  rest.errResponse:
+    properties:
+      message:
+        type: string
+    type: object
 host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: andy.ahmedov@gmail.com
+    name: Andy Ahmedov
+    url: https://github.com/andy-ahmedov
   description: Service implementing crud operations
-  title: CRUD-service
+  title: CRUD API Service
   version: "1.2"
 paths:
   /books:
@@ -39,7 +47,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Books have been successfully received.
           schema:
             items:
               $ref: '#/definitions/domain.Book'
@@ -47,7 +55,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
       summary: getAllBooks
       tags:
       - books
@@ -67,71 +75,61 @@ paths:
       - application/json
       responses:
         "200":
-          description: ok
+          description: The data has been successfully written.
           schema:
             type: string
         "400":
           description: Bad Request
           schema:
-            type: string
-        "404":
-          description: Bad Request
-          schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
       summary: CreateBook
       tags:
       - books
-  /books/id:
+  /books/{id}:
     delete:
       consumes:
       - application/json
       description: Deleting a book by ID.
       operationId: delete-book
       parameters:
-      - description: book id
-        in: body
+      - description: Book ID
+        in: path
         name: id
         required: true
-        schema:
-          type: integer
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: ok
+          description: The data has been successfully written.
           schema:
             type: string
         "400":
           description: Bad Request
           schema:
-            type: string
-        "404":
-          description: Bad Request
-          schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
       summary: deleteBook
       tags:
       - id
     get:
       consumes:
       - application/json
-      description: Retrieving a book by ID.
+      description: Retrieves a book by ID. If the book is not found, returns an error.
       operationId: get-book-by-id
       parameters:
-      - description: book id
-        in: body
+      - description: Book ID
+        in: path
         name: id
         required: true
-        schema:
-          type: integer
+        type: integer
       produces:
       - application/json
       responses:
@@ -142,27 +140,26 @@ paths:
         "400":
           description: Bad Request
           schema:
-            type: string
-        "404":
-          description: Bad Request
-          schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
-      summary: getBookByID
-      tags:
-      - id
+            $ref: '#/definitions/rest.errResponse'
+      summary: GetBookByID
     put:
       consumes:
       - application/json
       description: Updating book data by ID.
       operationId: update-book
       parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Book update information
         in: body
-        name: input
+        name: updateBook
         required: true
         schema:
           $ref: '#/definitions/domain.UpdateBookInput'
@@ -176,15 +173,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            type: string
-        "404":
-          description: Bad Request
-          schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/rest.errResponse'
       summary: updateBook
       tags:
       - id
