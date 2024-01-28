@@ -114,7 +114,6 @@ func (h *Handler) getBookByID(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 			return
 		}
-		// log.Println("getByID() error:", err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
