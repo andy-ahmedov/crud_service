@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -24,8 +26,17 @@ func (b *Books) Create(ctx context.Context, book *domain.Book) error {
 	request := `INSERT INTO books(title, author, publish_date, rating) VALUES($1, $2, $3, $4) RETURNING id`
 	if err := b.db.QueryRow(ctx, request, book.Title, book.Author, book.PublishDate, book.Rating).Scan(&book.ID); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
-			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			fmt.Println(newErr)
+			// newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			log.WithFields(log.Fields{
+				"file":     "booksRepository.go",
+				"func":     "Create",
+				"problem":  "SQL Request Error",
+				"error":    pgErr.Message,
+				"detail":   pgErr.Detail,
+				"where":    pgErr.Where,
+				"code":     pgErr.Code,
+				"SQLState": pgErr.SQLState(),
+			}).Error(err)
 			return nil
 		}
 		return err

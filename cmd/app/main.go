@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"time"
+	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/andy-ahmedov/crud_service/internal/config"
 	"github.com/andy-ahmedov/crud_service/internal/repository/psql"
@@ -29,6 +30,14 @@ const (
 	CONFIG_FILE = "main"
 )
 
+func init() {
+	log.SetFormatter(&log.JSONFormatter{
+		PrettyPrint: true,
+	})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
 	cfg, err := config.New(CONFIG_DIR, CONFIG_FILE)
 	if err != nil {
@@ -50,7 +59,7 @@ func main() {
 		Handler: handler.InitGinRouter(),
 	}
 
-	log.Println("SERVER STARTED AT", time.Now().Format(time.RFC3339))
+	log.Info("SERVER STARTED")
 
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)

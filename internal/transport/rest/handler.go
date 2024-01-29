@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
+
 	_ "github.com/andy-ahmedov/crud_service/docs"
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/andy-ahmedov/crud_service/internal/service"
@@ -58,13 +60,20 @@ func (h Handler) createBook(c *gin.Context) {
 	var book domain.Book
 
 	if err := c.ShouldBindJSON(&book); err != nil {
+		log.WithFields(log.Fields{
+			"handler": "createBook",
+			"problem": "writing data to a structure",
+		}).Error(err)
 		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 		return
 	}
 
 	err := h.booksService.Create(context.TODO(), &book)
 	if err != nil {
-		// log.Println("ginCreateBook() error: ", err)
+		log.WithFields(log.Fields{
+			"handler": "createBook",
+			"problem": "service error",
+		}).Error(err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
@@ -83,6 +92,10 @@ func (h Handler) createBook(c *gin.Context) {
 func (h *Handler) getAllBooks(c *gin.Context) {
 	books, err := h.booksService.GetAll(c)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "getAllBooks",
+			"problem": "reading data from a database",
+		}).Error(err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
@@ -103,6 +116,10 @@ func (h *Handler) getAllBooks(c *gin.Context) {
 func (h *Handler) getBookByID(c *gin.Context) {
 	id, err := getIDFromRequest(c.Param("id"))
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "getBookByID",
+			"problem": "reading id from request",
+		}).Error(err)
 		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 		return
 	}
@@ -110,9 +127,17 @@ func (h *Handler) getBookByID(c *gin.Context) {
 	book, err := h.booksService.GetByID(context.TODO(), id)
 	if err != nil {
 		if errors.Is(err, domain.ErrBookNotFound) {
+			log.WithFields(log.Fields{
+				"handler": "getBookByID",
+				"problem": "there is no book with the given identifier",
+			}).Error(err)
 			c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 			return
 		}
+		log.WithFields(log.Fields{
+			"handler": "getBookByID",
+			"problem": "reading data from a database",
+		}).Error(err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
@@ -134,12 +159,20 @@ func (h *Handler) getBookByID(c *gin.Context) {
 func (h *Handler) deleteBook(c *gin.Context) {
 	id, err := getIDFromRequest(c.Param("id"))
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "deleteBook",
+			"problem": "reading id from request",
+		}).Error(err)
 		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 		return
 	}
 
 	err = h.booksService.Delete(context.TODO(), id)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "deleteBook",
+			"problem": "deleting data from the database",
+		}).Error(err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
@@ -163,18 +196,30 @@ func (h *Handler) updateBook(c *gin.Context) {
 	var updBook domain.UpdateBookInput
 
 	if err := c.ShouldBindJSON(&updBook); err != nil {
+		log.WithFields(log.Fields{
+			"handler": "updateBook",
+			"problem": "writing data to a structure",
+		}).Error(err)
 		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 		return
 	}
 
 	id, err := getIDFromRequest(c.Param("id"))
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "updateBook",
+			"problem": "reading id from request",
+		}).Error(err)
 		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
 		return
 	}
 
 	err = h.booksService.Update(context.TODO(), id, updBook)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "updateBook",
+			"problem": "service error",
+		}).Error(err)
 		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
 		return
 	}
