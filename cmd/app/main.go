@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/andy-ahmedov/crud_service/internal/config"
 	"github.com/andy-ahmedov/crud_service/internal/repository/psql"
 	"github.com/andy-ahmedov/crud_service/internal/service"
 	"github.com/andy-ahmedov/crud_service/internal/transport/rest"
@@ -23,8 +24,18 @@ import (
 // @host localhost:8080
 // @BasePath /
 
+const (
+	CONFIG_DIR  = "configs"
+	CONFIG_FILE = "main"
+)
+
 func main() {
-	db, err := postgres.ConnectToDB()
+	cfg, err := config.New(CONFIG_DIR, CONFIG_FILE)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, err := postgres.ConnectToDB(cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +46,7 @@ func main() {
 	handler := rest.NewHandler(booksService)
 
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    cfg.Server.Port,
 		Handler: handler.InitGinRouter(),
 	}
 
