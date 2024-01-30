@@ -3,30 +3,40 @@ package rest
 import (
 	"context"
 	"errors"
-	"net/http"
 	"strconv"
-
-	log "github.com/sirupsen/logrus"
 
 	_ "github.com/andy-ahmedov/crud_service/docs"
 	"github.com/andy-ahmedov/crud_service/internal/domain"
-	"github.com/andy-ahmedov/crud_service/internal/service"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+type BooksRepository interface {
+	Create(ctx context.Context, book *domain.Book) error
+	GetByID(ctx context.Context, id int64) (domain.Book, error)
+	GetAll(ctx context.Context) ([]domain.Book, error)
+	Delete(ctx context.Context, id int64) error
+	Update(ctx context.Context, id int64, updBook domain.UpdateBookInput) error
+}
+
+type UserRepository interface {
+	SignUp(ctx context.Context, inp domain.SignUpInput) error
+}
 
 type errResponse struct {
 	Message string
 }
 
 type Handler struct {
-	booksService service.BooksInterface
+	booksService BooksRepository
+	userService  UserRepository
 }
 
-func NewHandler(books service.BooksInterface) *Handler {
+func NewHandler(books BooksRepository, users UserRepository) *Handler {
 	return &Handler{
 		booksService: books,
+		userService:  users,
 	}
 }
 
@@ -35,196 +45,15 @@ func (h Handler) InitGinRouter() *gin.Engine {
 
 	router.POST("/books", h.createBook)
 	router.GET("/books", h.getAllBooks)
-	router.GET("/books/:id", h.getBookByID)
+	router.GET("/books/:id", h.getBook)
 	router.DELETE("/books/:id", h.deleteBook)
 	router.PUT("books/:id", h.updateBook)
+	router.POST("/auth/sign-up", h.signUp)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.Run()
 
 	return router
-}
-
-// @Summary CreateBook
-// @Tags books
-// @Description Adding a book to the database.
-// @ID add-book
-// @Accept json
-// @Produce json
-// @Param input body domain.Book true "Book information"
-// @Success 200 {string} gin.H "The data has been successfully written."
-// @Failure 400 {object} errResponse "Bad Request"
-// @Failure 500 {object} errResponse "Internal Server Error"
-// @Router /books [post]
-func (h Handler) createBook(c *gin.Context) {
-	var book domain.Book
-
-	if err := c.ShouldBindJSON(&book); err != nil {
-		log.WithFields(log.Fields{
-			"handler": "createBook",
-			"problem": "writing data to a structure",
-		}).Error(err)
-		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
-		return
-	}
-
-	err := h.booksService.Create(context.TODO(), &book)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "createBook",
-			"problem": "service error",
-		}).Error(err)
-		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"id": book.ID})
-}
-
-// @Summary getAllBooks
-// @Tags books
-// @Description Getting all books.
-// @ID get-all-books
-// @Produce json
-// @Success 200 {array} domain.Book "Books have been successfully received."
-// @Failure 500 {object} errResponse "Internal Server Error"
-// @Router /books [get]
-func (h *Handler) getAllBooks(c *gin.Context) {
-	books, err := h.booksService.GetAll(c)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "getAllBooks",
-			"problem": "reading data from a database",
-		}).Error(err)
-		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, books)
-}
-
-// @Summary GetBookByID
-// @Description Retrieves a book by ID. If the book is not found, returns an error.
-// @ID get-book-by-id
-// @Accept  json
-// @Produce  json
-// @Param id path int true "Book ID"
-// @Success 200 {object} domain.Book "OK"
-// @Failure 400 {object} errResponse "Bad Request"
-// @Failure 500 {object} errResponse "Internal Server Error"
-// @Router /books/{id} [get]
-func (h *Handler) getBookByID(c *gin.Context) {
-	id, err := getIDFromRequest(c.Param("id"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "getBookByID",
-			"problem": "reading id from request",
-		}).Error(err)
-		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
-		return
-	}
-
-	book, err := h.booksService.GetByID(context.TODO(), id)
-	if err != nil {
-		if errors.Is(err, domain.ErrBookNotFound) {
-			log.WithFields(log.Fields{
-				"handler": "getBookByID",
-				"problem": "there is no book with the given identifier",
-			}).Error(err)
-			c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
-			return
-		}
-		log.WithFields(log.Fields{
-			"handler": "getBookByID",
-			"problem": "reading data from a database",
-		}).Error(err)
-		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, book)
-}
-
-// @Summary deleteBook
-// @Tags id
-// @Description Deleting a book by ID.
-// @ID delete-book
-// @Accept json
-// @Produce json
-// @Param id path int true "Book ID"
-// @Success 200 {string} string "The data has been successfully written."
-// @Failure 400 {object} errResponse "Bad Request"
-// @Failure 500 {object} errResponse "Internal Server Error"
-// @Router /books/{id} [delete]
-func (h *Handler) deleteBook(c *gin.Context) {
-	id, err := getIDFromRequest(c.Param("id"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "deleteBook",
-			"problem": "reading id from request",
-		}).Error(err)
-		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
-		return
-	}
-
-	err = h.booksService.Delete(context.TODO(), id)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "deleteBook",
-			"problem": "deleting data from the database",
-		}).Error(err)
-		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
-		return
-	}
-
-	c.String(http.StatusOK, "The row with the given ID was successfully deleted.\n")
-}
-
-// @Summary updateBook
-// @Tags id
-// @Description Updating book data by ID.
-// @ID update-book
-// @Accept json
-// @Produce json
-// @Param id path int true "Book ID"
-// @Param updateBook body domain.UpdateBookInput true "Book update information"
-// @Success 200 {string} string "ok"
-// @Failure 400 {object} errResponse "Bad Request"
-// @Failure 500 {object} errResponse "Internal Server Error"
-// @Router /books/{id} [put]
-func (h *Handler) updateBook(c *gin.Context) {
-	var updBook domain.UpdateBookInput
-
-	if err := c.ShouldBindJSON(&updBook); err != nil {
-		log.WithFields(log.Fields{
-			"handler": "updateBook",
-			"problem": "writing data to a structure",
-		}).Error(err)
-		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
-		return
-	}
-
-	id, err := getIDFromRequest(c.Param("id"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "updateBook",
-			"problem": "reading id from request",
-		}).Error(err)
-		c.JSON(http.StatusBadRequest, errResponse{Message: err.Error()})
-		return
-	}
-
-	err = h.booksService.Update(context.TODO(), id, updBook)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"handler": "updateBook",
-			"problem": "service error",
-		}).Error(err)
-		c.JSON(http.StatusInternalServerError, errResponse{Message: err.Error()})
-		return
-	}
-
-	c.String(http.StatusOK, "The book with the given ID has been successfully updated.\n")
 }
 
 func getIDFromRequest(param string) (int64, error) {

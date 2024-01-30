@@ -24,6 +24,19 @@ definitions:
       title:
         type: string
     type: object
+  domain.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+      registered_at:
+        type: string
+    type: object
   rest.errResponse:
     properties:
       message:
@@ -39,6 +52,37 @@ info:
   title: CRUD API Service
   version: "1.2"
 paths:
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Registration of a new user in the system.
+      operationId: sign-up
+      parameters:
+      - description: User info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The user has been successfully registered.
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.errResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.errResponse'
+      summary: SignUp
+      tags:
+      - auth
   /books:
     get:
       description: Getting all books.

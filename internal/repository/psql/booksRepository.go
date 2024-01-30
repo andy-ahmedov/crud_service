@@ -18,7 +18,7 @@ type Books struct {
 	db *pgx.Conn
 }
 
-func NewBook(db *pgx.Conn) *Books {
+func NewBookRepository(db *pgx.Conn) *Books {
 	return &Books{db}
 }
 

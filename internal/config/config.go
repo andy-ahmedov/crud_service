@@ -11,6 +11,9 @@ type Config struct {
 	Server struct {
 		Port string `mapstructure:"port"`
 	} `mapstructure:"server"`
+
+	Salt   string `mapstructure:"salt"`
+	Secret string `mapstructure:"secret"`
 }
 
 type Postgres struct {

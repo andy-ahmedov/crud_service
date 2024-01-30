@@ -11,6 +11,7 @@ import (
 	"github.com/andy-ahmedov/crud_service/internal/repository/psql"
 	"github.com/andy-ahmedov/crud_service/internal/service"
 	"github.com/andy-ahmedov/crud_service/internal/transport/rest"
+	"github.com/andy-ahmedov/crud_service/pkg/hash"
 	"github.com/andy-ahmedov/crud_service/pkg/postgres"
 )
 
@@ -50,9 +51,15 @@ func main() {
 	}
 	defer db.Close(context.Background())
 
-	booksRepo := psql.NewBook(db)
+	hasher := hash.NewSHA1Hasher(cfg.Salt)
+
+	booksRepo := psql.NewBookRepository(db)
 	booksService := service.NewBooksStorage(booksRepo)
-	handler := rest.NewHandler(booksService)
+
+	userRepo := psql.NewUserRepository(db)
+	userService := service.NewUsers(userRepo, hasher, []byte(cfg.Secret))
+
+	handler := rest.NewHandler(booksService, userService)
 
 	srv := &http.Server{
 		Addr:    cfg.Server.Port,
