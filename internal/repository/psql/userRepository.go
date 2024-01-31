@@ -22,3 +22,15 @@ func (u *UserRepository) CreateUser(ctx context.Context, user domain.User) error
 
 	return err
 }
+
+func (u *UserRepository) GetByCredential(ctx context.Context, email string, password string) (domain.User, error) {
+	var user domain.User
+	request := `SELECT id, name, email, password, registered_at FROM users WHERE email=$1 AND password=$2`
+	err := u.db.QueryRow(ctx, request, email, password).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.RegisteredAt)
+
+	return user, err
+}
+
+// GetByCredential (domain.User, error)
+// отправляем запрос с эмейлом и паролем в базу
+// Получаем обратно структуру User со всеми полями

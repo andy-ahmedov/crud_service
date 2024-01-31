@@ -13,6 +13,32 @@ definitions:
       title:
         type: string
     type: object
+  domain.SignInInput:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  domain.SignUpInput:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
   domain.UpdateBookInput:
     properties:
       author:
@@ -22,19 +48,6 @@ definitions:
       rating:
         type: integer
       title:
-        type: string
-    type: object
-  domain.User:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      password:
-        type: string
-      registered_at:
         type: string
     type: object
   rest.errResponse:
@@ -52,6 +65,37 @@ info:
   title: CRUD API Service
   version: "1.2"
 paths:
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: User authentication by email and password.
+      operationId: sign-in
+      parameters:
+      - description: User info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.SignInInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The JWT token was successfully generated.
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.errResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.errResponse'
+      summary: SignIn
+      tags:
+      - auth
   /auth/sign-up:
     post:
       consumes:
@@ -64,7 +108,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/domain.User'
+          $ref: '#/definitions/domain.SignUpInput'
       produces:
       - application/json
       responses:

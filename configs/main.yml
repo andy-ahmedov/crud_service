@@ -3,3 +3,4 @@ server:
 
 salt: "salt"
 secret: "secret"
+token_ttl: 15m
