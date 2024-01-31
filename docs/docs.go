@@ -115,6 +115,11 @@ const docTemplate = `{
         },
         "/books": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Getting all books.",
                 "produces": [
                     "application/json"
@@ -143,6 +148,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Adding a book to the database.",
                 "consumes": [
                     "application/json"
@@ -190,12 +200,20 @@ const docTemplate = `{
         },
         "/books/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves a book by ID. If the book is not found, returns an error.",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "id"
                 ],
                 "summary": "GetBookByID",
                 "operationId": "get-book-by-id",
@@ -230,6 +248,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Updating book data by ID.",
                 "consumes": [
                     "application/json"
@@ -282,6 +305,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Deleting a book by ID.",
                 "consumes": [
                     "application/json"
@@ -408,6 +436,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

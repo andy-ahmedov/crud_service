@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -55,12 +56,6 @@ func (u *Users) SignUp(ctx context.Context, inp domain.SignUpInput) error {
 }
 
 func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, error) {
-	// хешируем пароль
-	// отправляем данные для входа наверх для получения юзера
-	// если получаем ошибку ErrNoRows, то возвращаем ошибку отсутствия пользователя с этими данными
-	// генерим токен используя метод jwt.NewWithClaims
-	// подписываем с помощью секрета получившийся токен используя метод SignedString
-	// и возвращаем его
 	password, err := u.hasher.Hash(inp.Password)
 	if err != nil {
 		return "", err
@@ -77,8 +72,55 @@ func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, err
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
 		ExpiresAt: time.Now().Add(u.tokenTtl).Unix(),
-		Id:        strconv.Itoa(int(getIt.ID)),
+		Subject:   strconv.Itoa(int(getIt.ID)),
 	})
 
 	return token.SignedString(u.hmacSecret)
 }
+
+func (u *Users) ParseToken(ctx context.Context, token string) (int64, error) {
+	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return u.hmacSecret, nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	if !t.Valid {
+		return 0, errors.New("Invalid token")
+	}
+
+	claims, ok := t.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("invalid claims")
+	}
+
+	subject := claims["sub"].(string)
+	if err != nil {
+		return 0, errors.New("invalid subject")
+	}
+
+	id, err := strconv.Atoi(subject)
+	if err != nil {
+		return 0, errors.New("invalid subject")
+	}
+
+	return int64(id), nil
+}
+
+// ParseToken(ctx context.Context, token string) (int64, error)
+// вызываем функцию jwt.Parse(..., func(token *jwt.Token) (interface{}, error) {
+// найти в документации jwt (example parsing and validating token HMAC)
+// в конце анонимной функции возвращаем наш секрет
+// Проверка на ошибку
+// Проверка на валидность
+// Достаем клеймсы из t.Claims(jwt.MapClaims). При ошибке "invalid claims"
+// Достаем сабджект из клеймса выше используя ["sub"].(string). При ошибке "invalid subject"
+// Преобразовываем полученный сабджект в int. При ошибке "invalid subject"
+// Возвращаем int64(id)

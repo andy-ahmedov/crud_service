@@ -10,6 +10,7 @@ import (
 )
 
 // @Summary CreateBook
+// @Security ApiKeyAuth
 // @Tags books
 // @Description Adding a book to the database.
 // @ID add-book
@@ -40,6 +41,7 @@ func (h Handler) createBook(c *gin.Context) {
 }
 
 // @Summary getAllBooks
+// @Security ApiKeyAuth
 // @Tags books
 // @Description Getting all books.
 // @ID get-all-books
@@ -59,6 +61,8 @@ func (h *Handler) getAllBooks(c *gin.Context) {
 }
 
 // @Summary GetBookByID
+// @Security ApiKeyAuth
+// @Tags id
 // @Description Retrieves a book by ID. If the book is not found, returns an error.
 // @ID get-book-by-id
 // @Accept  json
@@ -92,6 +96,7 @@ func (h *Handler) getBook(c *gin.Context) {
 }
 
 // @Summary deleteBook
+// @Security ApiKeyAuth
 // @Tags id
 // @Description Deleting a book by ID.
 // @ID delete-book
@@ -121,6 +126,7 @@ func (h *Handler) deleteBook(c *gin.Context) {
 }
 
 // @Summary updateBook
+// @Security ApiKeyAuth
 // @Tags id
 // @Description Updating book data by ID.
 // @ID update-book

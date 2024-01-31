@@ -144,6 +144,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.errResponse'
+      security:
+      - ApiKeyAuth: []
       summary: getAllBooks
       tags:
       - books
@@ -174,6 +176,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.errResponse'
+      security:
+      - ApiKeyAuth: []
       summary: CreateBook
       tags:
       - books
@@ -204,6 +208,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.errResponse'
+      security:
+      - ApiKeyAuth: []
       summary: deleteBook
       tags:
       - id
@@ -233,7 +239,11 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.errResponse'
+      security:
+      - ApiKeyAuth: []
       summary: GetBookByID
+      tags:
+      - id
     put:
       consumes:
       - application/json
@@ -266,7 +276,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.errResponse'
+      security:
+      - ApiKeyAuth: []
       summary: updateBook
       tags:
       - id
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

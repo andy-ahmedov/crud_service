@@ -26,6 +26,10 @@ import (
 // @host localhost:8080
 // @BasePath /
 
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
 const (
 	CONFIG_DIR  = "configs"
 	CONFIG_FILE = "main"
@@ -36,7 +40,7 @@ func init() {
 		PrettyPrint: true,
 	})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.ErrorLevel)
 }
 
 func main() {

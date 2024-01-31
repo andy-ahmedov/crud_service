@@ -23,6 +23,7 @@ type BooksRepository interface {
 type UserRepository interface {
 	SignUp(ctx context.Context, inp domain.SignUpInput) error
 	SignIn(ctx context.Context, inp domain.SignInInput) (string, error)
+	ParseToken(ctx context.Context, token string) (int64, error)
 }
 
 type errResponse struct {
@@ -44,14 +45,27 @@ func NewHandler(books BooksRepository, users UserRepository) *Handler {
 func (h Handler) InitGinRouter() *gin.Engine {
 	router := gin.Default()
 
-	router.POST("/books", h.createBook)
-	router.GET("/books", h.getAllBooks)
-	router.GET("/books/:id", h.getBook)
-	router.DELETE("/books/:id", h.deleteBook)
-	router.PUT("books/:id", h.updateBook)
+	router.Use(loggingMiddleware)
 
-	router.POST("/auth/sign-up", h.signUp)
-	router.POST("/auth/sign-in", h.signIn)
+	auth := router.Group("/auth")
+	{
+		auth.POST("/sign-up", h.signUp)
+		auth.POST("/sign-in", h.signIn)
+	}
+
+	books := router.Group("/books")
+	books.Use(h.authMiddleware)
+	{
+		books.POST("", h.createBook)
+		books.GET("", h.getAllBooks)
+
+		id := books.Group("/:id")
+		{
+			id.GET("", h.getBook)
+			id.DELETE("", h.deleteBook)
+			id.PUT("", h.updateBook)
+		}
+	}
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.Run()

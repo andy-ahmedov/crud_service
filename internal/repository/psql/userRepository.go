@@ -30,7 +30,3 @@ func (u *UserRepository) GetByCredential(ctx context.Context, email string, pass
 
 	return user, err
 }
-
-// GetByCredential (domain.User, error)
-// отправляем запрос с эмейлом и паролем в базу
-// Получаем обратно структуру User со всеми полями
