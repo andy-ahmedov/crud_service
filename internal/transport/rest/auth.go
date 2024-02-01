@@ -58,6 +58,7 @@ func (h *Handler) signIn(c *gin.Context) {
 		return
 	}
 
+	// использовать новую версию SignIn функции для получения двух токенов
 	token, err := h.userService.SignIn(context.TODO(), inp)
 	if err != nil {
 		if errors.Is(domain.ErrUserNotFound, err) {
@@ -68,8 +69,19 @@ func (h *Handler) signIn(c *gin.Context) {
 		return
 	}
 
+	// добавить хедер Set-Cookie в который будет будет даваться строка с рефрештокеном и указанием HttpOnly через точку с запятой и пробелом
+
+	// возвращать аксестокен в поле токена
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
+
+// функция refresh(w http.ResponseWriter, r *http.Request)
+// достаем из реквеста с помощью метода Cookie куки с названием refresh-token
+// используем метод Infof библиотеки логирования для вывода в stdout Value полученной куки
+// используем функцию RefreshTokens(r.Context(), ...) вставив значение полученной куки, и получаем аксес и рефрештокены. Если ошибка возвращаем Internal
+// добавить хедер Set-Cookie в который будет будет даваться строка с рефрештокеном и указанием HttpOnly через точку с запятой и пробелом
+// возвращаем аксесс токен в json с полем token
+// 
 
 func handlerErrUserNotFound(handler string, err error, c *gin.Context) {
 	logError(handler, domain.ErrUserNotFound.Error(), err)

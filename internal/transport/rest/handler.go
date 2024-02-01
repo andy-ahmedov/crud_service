@@ -51,6 +51,7 @@ func (h Handler) InitGinRouter() *gin.Engine {
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
+		// добавить эндпоинт /refresh
 	}
 
 	books := router.Group("/books")
