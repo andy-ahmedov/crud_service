@@ -65,6 +65,28 @@ info:
   title: CRUD API Service
   version: "1.2"
 paths:
+  /auth/refresh:
+    post:
+      description: Refresh token update.
+      operationId: refresh
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Refresh token has been successfully updated.
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.errResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.errResponse'
+      summary: Refresh
+      tags:
+      - auth
   /auth/sign-in:
     post:
       consumes:

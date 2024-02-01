@@ -22,8 +22,9 @@ type BooksRepository interface {
 
 type UserRepository interface {
 	SignUp(ctx context.Context, inp domain.SignUpInput) error
-	SignIn(ctx context.Context, inp domain.SignInInput) (string, error)
+	SignIn(ctx context.Context, inp domain.SignInInput) (string, string, error)
 	ParseToken(ctx context.Context, token string) (int64, error)
+	RefreshTokens(ctx context.Context, refreshToken string) (string, string, error)
 }
 
 type errResponse struct {
@@ -51,7 +52,7 @@ func (h Handler) InitGinRouter() *gin.Engine {
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
-		// добавить эндпоинт /refresh
+		auth.POST("/refresh", h.refresh)
 	}
 
 	books := router.Group("/books")

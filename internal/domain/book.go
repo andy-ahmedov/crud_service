@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	_ "errors"
 	"time"
 )
@@ -20,7 +19,3 @@ type UpdateBookInput struct {
 	PublishDate *time.Time `json:"publish_date"`
 	Rating      *int       `json:"rating"`
 }
-
-var (
-	ErrBookNotFound = errors.New("Book not found")
-)

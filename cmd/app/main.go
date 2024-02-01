@@ -58,11 +58,12 @@ func main() {
 	hasher := hash.NewSHA1Hasher(cfg.Salt)
 
 	booksRepo := psql.NewBookRepository(db)
+	sessionRepo := psql.NewTokens(db)
 	// добавить репозиторий токена. Включить его в параметры NewUsers
 	booksService := service.NewBooksStorage(booksRepo)
 
 	userRepo := psql.NewUserRepository(db)
-	userService := service.NewUsers(userRepo, hasher, []byte(cfg.Secret), cfg.TokenTTL)
+	userService := service.NewUsers(userRepo, hasher, sessionRepo, []byte(cfg.Secret), cfg.TokenTTL)
 
 	handler := rest.NewHandler(booksService, userService)
 

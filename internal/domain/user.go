@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"time"
 
 	_ "github.com/gin-gonic/gin"
@@ -25,7 +24,3 @@ type SignInInput struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,gte=6"`
 }
-
-var (
-	ErrUserNotFound = errors.New("User not found")
-)

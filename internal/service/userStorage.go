@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -14,8 +15,9 @@ import (
 
 // добавляем новое поле sessionRepo SessionRepository
 type Users struct {
-	repo   UserStorage
-	hasher PasswordHasher
+	repo        UserStorage
+	hasher      PasswordHasher
+	sessionRepo SessionRepository
 
 	hmacSecret []byte
 	tokenTtl   time.Duration
@@ -30,18 +32,19 @@ type UserStorage interface {
 	GetByCredential(ctx context.Context, email string, passwords string) (domain.User, error)
 }
 
-// добавляем новый интерфейс SessionRepository 
-// Create(ctx context.Context, token domain.RefreshSession) error
-// Get(ctx ..... , token string) (domain.RefreshSession, error)
-
+type SessionRepository interface {
+	Create(ctx context.Context, token domain.RefreshSession) error
+	Get(ctx context.Context, token string) (domain.RefreshSession, error)
+}
 
 // также добавляем новое поле в NewUsers
-func NewUsers(repo UserStorage, hasher PasswordHasher, secret []byte, ttl time.Duration) *Users {
+func NewUsers(repo UserStorage, hasher PasswordHasher, sessionRepo SessionRepository, secret []byte, ttl time.Duration) *Users {
 	return &Users{
-		repo:       repo,
-		hasher:     hasher,
-		hmacSecret: secret,
-		tokenTtl:   ttl,
+		repo:        repo,
+		hasher:      hasher,
+		hmacSecret:  secret,
+		tokenTtl:    ttl,
+		sessionRepo: sessionRepo,
 	}
 
 }
@@ -62,30 +65,21 @@ func (u *Users) SignUp(ctx context.Context, inp domain.SignUpInput) error {
 	return u.repo.CreateUser(ctx, user)
 }
 
-
-// изменить signIn функцию, чтобы она возвращала accesT refreshT и err
-func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, error) {
+func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, string, error) {
 	password, err := u.hasher.Hash(inp.Password)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	getIt, err := u.repo.GetByCredential(ctx, inp.Email, password)
 	if err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
-			return "", domain.ErrUserNotFound
+			return "", "", domain.ErrUserNotFound
 		}
-		return "", err
+		return "", "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: time.Now().Add(u.tokenTtl).Unix(),
-		Subject:   strconv.Itoa(int(getIt.ID)),
-	})
-
-	// возвращаем метод generateTokens(ctx, user.ID)
-	return token.SignedString(u.hmacSecret)
+	return u.generateTokens(ctx, getIt.ID)
 }
 
 func (u *Users) ParseToken(ctx context.Context, token string) (int64, error) {
@@ -120,27 +114,64 @@ func (u *Users) ParseToken(ctx context.Context, token string) (int64, error) {
 	if err != nil {
 		return 0, errors.New("invalid subject")
 	}
-	
+
 	return int64(id), nil
 }
 
+func (u *Users) generateTokens(ctx context.Context, userID int64) (string, string, error) {
+	notSigned := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		IssuedAt:  time.Now().Unix(),
+		ExpiresAt: time.Now().Add(u.tokenTtl).Unix(),
+		Subject:   strconv.Itoa(int(userID)),
+	})
 
-// generateTokens(ctx , userID int64) (string string error)
-// перенести логику jwt.NewWithClaims и 
-// ..., ... := t.SignedString()
-// после чего используем функцию newRefreshTokens для генерации рефрештокена
-// используем метод create сущности sessionRepo для создания новой рефрешСессии, вставив в поля userID, refreshToken и время окончания через 30 дней. Проверяем на ошибки
-// возвращаем аксесс рефреш и ошибку
+	accessToken, err := notSigned.SignedString(u.hmacSecret)
+	if err != nil {
+		return "", "", err
+	}
 
+	refreshToken, err := newRefreshToken()
+	if err != nil {
+		return "", "", err
+	}
 
-//  newRefreshToken() (string, err)
-// создаем слайс байтов с емкостью 32
-// создаем newSource с помощью одноименной функции в библиотеке ранд, положив туда нынешнее время в формате юникс
-// полсе чего используем newSource для создания нового структуры ранд используя функцию New в библе ранд
-// используем метод Read из переменной выше в которой кладем созданный слайс, проверяем на ошибки
-// возвращаем строку в формате %x
+	session := domain.RefreshSession{
+		UserID:    userID,
+		Token:     refreshToken,
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 30),
+	}
 
-// RefreshTokens(ctx, refreshToken string) (string, string, error)
-// используем метод Get сущности sessionRepo для получения сессии. Проверяем на ошибки
-// проверяем если в полученной сессии поле ExpiresAt преобразованная в unix меньше нынешнего времени того же формата, возвращаем ошибку из domain ErrRefreshTokenExpired
-// возвращем метод generateTokens()
+	err = u.sessionRepo.Create(ctx, session)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+func newRefreshToken() (string, error) {
+	refresh := make([]byte, 32)
+
+	newSourse := rand.NewSource(time.Now().Unix())
+	r := rand.New(newSourse)
+
+	_, err := r.Read(refresh)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", refresh), err
+}
+
+func (u *Users) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
+	session, err := u.sessionRepo.Get(ctx, refreshToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	if session.ExpiresAt.Unix() < time.Now().Unix() {
+		return "", "", domain.ErrRefreshTokenExpired
+	}
+
+	return u.generateTokens(ctx, session.UserID)
+}
