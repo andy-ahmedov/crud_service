@@ -68,7 +68,6 @@ func (h *Handler) signIn(c *gin.Context) {
 		return
 	}
 
-	// c.Request.Header.Add("Set-Cookie", fmt.Sprintf("refresh-token='%s'; HttpOnly", refreshToken))
 	c.SetCookie("refresh-token", refreshToken, 0, "/auth", "localhost", false, true)
 	c.JSON(http.StatusOK, gin.H{"token": accessToken})
 }
