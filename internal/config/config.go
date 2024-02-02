@@ -17,6 +17,7 @@ type Config struct {
 	Salt     string        `mapstructure:"salt"`
 	Secret   string        `mapstructure:"secret"`
 	TokenTTL time.Duration `mapstructure:"token_ttl"`
+	Addres   string        `mapstructure:"addres"`
 }
 
 type Postgres struct {

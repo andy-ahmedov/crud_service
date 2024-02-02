@@ -8,6 +8,7 @@ import (
 	_ "github.com/andy-ahmedov/crud_service/docs"
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -22,9 +23,7 @@ type BooksRepository interface {
 
 type UserRepository interface {
 	SignUp(ctx context.Context, inp domain.SignUpInput) error
-	SignIn(ctx context.Context, inp domain.SignInInput) (string, string, error)
-	ParseToken(ctx context.Context, token string) (int64, error)
-	RefreshTokens(ctx context.Context, refreshToken string) (string, string, error)
+	SignIn(ctx context.Context, inp domain.SignInInput) (domain.User, error)
 }
 
 type errResponse struct {
@@ -34,12 +33,14 @@ type errResponse struct {
 type Handler struct {
 	booksService BooksRepository
 	userService  UserRepository
+	store        *sessions.CookieStore
 }
 
-func NewHandler(books BooksRepository, users UserRepository) *Handler {
+func NewHandler(books BooksRepository, users UserRepository, store *sessions.CookieStore) *Handler {
 	return &Handler{
 		booksService: books,
 		userService:  users,
+		store:        store,
 	}
 }
 
@@ -52,11 +53,10 @@ func (h Handler) InitGinRouter() *gin.Engine {
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
-		auth.POST("/refresh", h.refresh)
+		auth.POST("/logout", h.logout)
 	}
 
-	books := router.Group("/books")
-	books.Use(h.authMiddleware)
+	books := router.Group("/books", h.authMiddleware)
 	{
 		books.POST("", h.createBook)
 		books.GET("", h.getAllBooks)

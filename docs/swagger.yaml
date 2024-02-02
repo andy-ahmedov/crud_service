@@ -65,26 +65,22 @@ info:
   title: CRUD API Service
   version: "1.2"
 paths:
-  /auth/refresh:
+  /auth/logout:
     post:
-      description: Refresh token update.
-      operationId: refresh
+      description: User logout.
+      operationId: logout
       produces:
       - application/json
       responses:
         "200":
-          description: Refresh token has been successfully updated.
+          description: You are logged out!
           schema:
             type: string
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/rest.errResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.errResponse'
-      summary: Refresh
+      summary: Logout
       tags:
       - auth
   /auth/sign-in:
@@ -104,7 +100,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: The JWT token was successfully generated.
+          description: You are logged in!
           schema:
             type: string
         "400":
@@ -303,9 +299,4 @@ paths:
       summary: updateBook
       tags:
       - id
-securityDefinitions:
-  ApiKeyAuth:
-    in: header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"

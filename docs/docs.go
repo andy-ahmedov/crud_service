@@ -19,28 +19,22 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/refresh": {
+        "/auth/logout": {
             "post": {
-                "description": "Refresh token update.",
+                "description": "User logout.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "auth"
                 ],
-                "summary": "Refresh",
-                "operationId": "refresh",
+                "summary": "Logout",
+                "operationId": "logout",
                 "responses": {
                     "200": {
-                        "description": "Refresh token has been successfully updated.",
+                        "description": "You are logged out!",
                         "schema": {
                             "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/rest.errResponse"
                         }
                     },
                     "500": {
@@ -79,7 +73,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The JWT token was successfully generated.",
+                        "description": "You are logged in!",
                         "schema": {
                             "type": "string"
                         }
@@ -469,13 +463,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
         }
     }
 }`

@@ -6,7 +6,6 @@ import (
 
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 // @Summary SignUp
@@ -45,7 +44,7 @@ func (h *Handler) signUp(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param input body domain.SignInInput true "User info"
-// @Success 200 {string} gin.H "The JWT token was successfully generated."
+// @Success 200 {string} gin.H "You are logged in!"
 // @Failure 400 {object} errResponse "Bad Request"
 // @Failure 500 {object} errResponse "Internal Server Error"
 // @Router /auth/sign-in [post]
@@ -58,7 +57,7 @@ func (h *Handler) signIn(c *gin.Context) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.userService.SignIn(c.Request.Context(), inp)
+	user, err := h.userService.SignIn(c.Request.Context(), inp)
 	if err != nil {
 		if errors.Is(domain.ErrUserNotFound, err) {
 			handlerErrUserNotFound("SignIn", err, c)
@@ -68,36 +67,39 @@ func (h *Handler) signIn(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("refresh-token", refreshToken, 0, "/auth", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{"token": accessToken})
-}
-
-// @Summary Refresh
-// @Tags auth
-// @Description Refresh token update.
-// @ID refresh
-// @Produce json
-// @Success 200 {string} gin.H "Refresh token has been successfully updated."
-// @Failure 400 {object} errResponse "Bad Request"
-// @Failure 500 {object} errResponse "Internal Server Error"
-// @Router /auth/refresh [post]
-func (h *Handler) refresh(c *gin.Context) {
-	cookie, err := c.Request.Cookie("refresh-token")
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	session, _ := h.store.Get(c.Request, "session-name")
+	session.Values["user_id"] = user.ID
+	if err := session.Save(c.Request, c.Writer); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	logrus.Infof("%v", cookie.Value)
+	c.JSON(http.StatusOK, gin.H{"status": "You are logged in!"})
+}
 
-	accesToken, refreshToken, err := h.userService.RefreshTokens(c.Request.Context(), cookie.Value)
+// @Summary Logout
+// @Tags auth
+// @Description User logout.
+// @ID logout
+// @Produce json
+// @Success 200 {string} gin.H "You are logged out!"
+// @Failure 500 {object} errResponse "Internal Server Error"
+// @Router /auth/logout [post]
+func (h *Handler) logout(c *gin.Context) {
+	session, err := h.store.Get(c.Request, "session-name")
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	// c.Request.Header.Add("Set-Cookie", fmt.Sprintf("refresh-token='%s'; HttpOnly", refreshToken))
-	c.SetCookie("refresh-token", refreshToken, 0, "/auth", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{"token": accesToken})
+	session.Options.MaxAge = -1
+
+	if err := session.Save(c.Request, c.Writer); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "You are logged out!"})
 }
 
 func handlerErrUserNotFound(handler string, err error, c *gin.Context) {

@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/gob"
 	"net/http"
 	"os"
 
+	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/andy-ahmedov/crud_service/internal/config"
+	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/andy-ahmedov/crud_service/internal/repository/psql"
 	"github.com/andy-ahmedov/crud_service/internal/service"
 	"github.com/andy-ahmedov/crud_service/internal/transport/rest"
@@ -25,10 +28,6 @@ import (
 
 // @host localhost:8080
 // @BasePath /
-
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
 
 const (
 	CONFIG_DIR  = "configs"
@@ -58,14 +57,16 @@ func main() {
 	hasher := hash.NewSHA1Hasher(cfg.Salt)
 
 	booksRepo := psql.NewBookRepository(db)
-	sessionRepo := psql.NewTokens(db)
-	// добавить репозиторий токена. Включить его в параметры NewUsers
-	booksService := service.NewBooksStorage(booksRepo)
-
 	userRepo := psql.NewUserRepository(db)
-	userService := service.NewUsers(userRepo, hasher, sessionRepo, []byte(cfg.Secret), cfg.TokenTTL)
 
-	handler := rest.NewHandler(booksService, userService)
+	booksService := service.NewBooksStorage(booksRepo)
+	userService := service.NewUsers(userRepo, hasher, []byte(cfg.Secret), cfg.TokenTTL)
+
+	sessionStore := sessions.NewCookieStore([]byte(cfg.Secret))
+	sessionStore.Options.HttpOnly = true
+	gob.Register(&domain.User{})
+
+	handler := rest.NewHandler(booksService, userService, sessionStore)
 
 	srv := &http.Server{
 		Addr:    cfg.Server.Port,
