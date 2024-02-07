@@ -10,6 +10,7 @@
 Фреймворки:
 	swagger
  	gin
+  	gorilla
 
  Должно быть:
 
