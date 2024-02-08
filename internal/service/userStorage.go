@@ -9,15 +9,21 @@ import (
 	"strconv"
 	"time"
 
+	audit "github.com/andy-ahmedov/audit_log_server/pkg/domain"
 	"github.com/andy-ahmedov/crud_service/internal/domain"
 	"github.com/golang-jwt/jwt"
+	"github.com/sirupsen/logrus"
 )
 
-// добавляем новое поле sessionRepo SessionRepository
+type AuditClient interface {
+	SendLogRequest(ctx context.Context, req audit.LogItem) error
+}
+
 type Users struct {
 	repo        UserStorage
 	hasher      PasswordHasher
 	sessionRepo SessionRepository
+	auditClient AuditClient
 
 	hmacSecret []byte
 	tokenTtl   time.Duration
@@ -38,13 +44,14 @@ type SessionRepository interface {
 }
 
 // также добавляем новое поле в NewUsers
-func NewUsers(repo UserStorage, hasher PasswordHasher, sessionRepo SessionRepository, secret []byte, ttl time.Duration) *Users {
+func NewUsers(repo UserStorage, hasher PasswordHasher, sessionRepo SessionRepository, auditClient AuditClient, secret []byte, ttl time.Duration) *Users {
 	return &Users{
 		repo:        repo,
 		hasher:      hasher,
 		hmacSecret:  secret,
 		tokenTtl:    ttl,
 		sessionRepo: sessionRepo,
+		auditClient: auditClient,
 	}
 
 }
@@ -62,7 +69,28 @@ func (u *Users) SignUp(ctx context.Context, inp domain.SignUpInput) error {
 		RegisteredAt: time.Now(),
 	}
 
-	return u.repo.CreateUser(ctx, user)
+	// return u.repo.CreateUser(ctx, user)
+
+	if err := u.repo.CreateUser(ctx, user); err != nil {
+		return err
+	}
+
+	user, err = u.repo.GetByCredential(ctx, inp.Email, password)
+	if err != nil {
+		return err
+	}
+
+	if err := u.auditClient.SendLogRequest(ctx, audit.LogItem{
+		Action:    audit.ACTION_REGISTER,
+		Entity:    audit.ENTITY_USER,
+		EntityID:  user.ID,
+		Timestamp: time.Now(),
+	}); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"method": "User.SignUp",
+		}).Error("failed to send log request:", err)
+	}
+	return err
 }
 
 func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, string, error) {
