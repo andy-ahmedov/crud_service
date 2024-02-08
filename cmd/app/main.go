@@ -10,6 +10,7 @@ import (
 	"github.com/andy-ahmedov/crud_service/internal/config"
 	"github.com/andy-ahmedov/crud_service/internal/repository/psql"
 	"github.com/andy-ahmedov/crud_service/internal/service"
+	grpc_client "github.com/andy-ahmedov/crud_service/internal/transport/grpc"
 	"github.com/andy-ahmedov/crud_service/internal/transport/rest"
 	"github.com/andy-ahmedov/crud_service/pkg/hash"
 	"github.com/andy-ahmedov/crud_service/pkg/postgres"
@@ -63,7 +64,13 @@ func main() {
 	booksService := service.NewBooksStorage(booksRepo)
 
 	userRepo := psql.NewUserRepository(db)
-	userService := service.NewUsers(userRepo, hasher, sessionRepo, []byte(cfg.Secret), cfg.TokenTTL)
+
+	auditClient, err := grpc_client.NewClient(9000)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userService := service.NewUsers(userRepo, hasher, sessionRepo, auditClient, []byte(cfg.Secret), cfg.TokenTTL)
 
 	handler := rest.NewHandler(booksService, userService)
 
