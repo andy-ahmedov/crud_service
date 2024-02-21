@@ -12,7 +12,7 @@ stop_and_delete_container:
 	docker image rmi crud_service-db:latest
 
 create_table:
-	docker exec -it books psql -U postgres -d booking -c "\i script.sql"
+	docker exec -it new_task_manager psql -U postgres -d booking -c "\i script.sql"
 
 swag:
 	swag init -g cmd/app/main.go

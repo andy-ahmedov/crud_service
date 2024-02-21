@@ -15,18 +15,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//go:generate mockgen -source=userStorage.go -destination=mocks/mock.go
+
 type AuditClient interface {
 	SendLogRequest(ctx context.Context, req audit.LogItem) error
 }
 
 type Users struct {
-	repo        UserStorage
-	hasher      PasswordHasher
-	sessionRepo SessionRepository
-	auditClient AuditClient
+	Repo        UserStorage
+	Hasher      PasswordHasher
+	SessionRepo SessionRepository
+	AuditClient AuditClient
 
-	hmacSecret []byte
-	tokenTtl   time.Duration
+	HmacSecret []byte
+	TokenTtl   time.Duration
 }
 
 type PasswordHasher interface {
@@ -46,18 +48,18 @@ type SessionRepository interface {
 // также добавляем новое поле в NewUsers
 func NewUsers(repo UserStorage, hasher PasswordHasher, sessionRepo SessionRepository, auditClient AuditClient, secret []byte, ttl time.Duration) *Users {
 	return &Users{
-		repo:        repo,
-		hasher:      hasher,
-		hmacSecret:  secret,
-		tokenTtl:    ttl,
-		sessionRepo: sessionRepo,
-		auditClient: auditClient,
+		Repo:        repo,
+		Hasher:      hasher,
+		HmacSecret:  secret,
+		TokenTtl:    ttl,
+		SessionRepo: sessionRepo,
+		AuditClient: auditClient,
 	}
 
 }
 
 func (u *Users) SignUp(ctx context.Context, inp domain.SignUpInput) error {
-	password, err := u.hasher.Hash(inp.Password)
+	password, err := u.Hasher.Hash(inp.Password)
 	if err != nil {
 		return err
 	}
@@ -69,18 +71,16 @@ func (u *Users) SignUp(ctx context.Context, inp domain.SignUpInput) error {
 		RegisteredAt: time.Now(),
 	}
 
-	// return u.repo.CreateUser(ctx, user)
-
-	if err := u.repo.CreateUser(ctx, user); err != nil {
+	if err := u.Repo.CreateUser(ctx, user); err != nil {
 		return err
 	}
 
-	user, err = u.repo.GetByCredential(ctx, inp.Email, password)
+	user, err = u.Repo.GetByCredential(ctx, inp.Email, password)
 	if err != nil {
 		return err
 	}
 
-	if err := u.auditClient.SendLogRequest(ctx, audit.LogItem{
+	if err := u.AuditClient.SendLogRequest(ctx, audit.LogItem{
 		Action:    audit.ACTION_REGISTER,
 		Entity:    audit.ENTITY_USER,
 		EntityID:  user.ID,
@@ -94,12 +94,12 @@ func (u *Users) SignUp(ctx context.Context, inp domain.SignUpInput) error {
 }
 
 func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, string, error) {
-	password, err := u.hasher.Hash(inp.Password)
+	password, err := u.Hasher.Hash(inp.Password)
 	if err != nil {
 		return "", "", err
 	}
 
-	getIt, err := u.repo.GetByCredential(ctx, inp.Email, password)
+	getIt, err := u.Repo.GetByCredential(ctx, inp.Email, password)
 	if err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
 			return "", "", domain.ErrUserNotFound
@@ -113,11 +113,11 @@ func (u *Users) SignIn(ctx context.Context, inp domain.SignInInput) (string, str
 func (u *Users) ParseToken(ctx context.Context, token string) (int64, error) {
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return u.hmacSecret, nil
+		return u.HmacSecret, nil
 	})
 
 	if err != nil {
@@ -125,7 +125,7 @@ func (u *Users) ParseToken(ctx context.Context, token string) (int64, error) {
 	}
 
 	if !t.Valid {
-		return 0, errors.New("Invalid token")
+		return 0, errors.New("invalid token")
 	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)
@@ -149,11 +149,11 @@ func (u *Users) ParseToken(ctx context.Context, token string) (int64, error) {
 func (u *Users) generateTokens(ctx context.Context, userID int64) (string, string, error) {
 	notSigned := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: time.Now().Add(u.tokenTtl).Unix(),
+		ExpiresAt: time.Now().Add(u.TokenTtl).Unix(),
 		Subject:   strconv.Itoa(int(userID)),
 	})
 
-	accessToken, err := notSigned.SignedString(u.hmacSecret)
+	accessToken, err := notSigned.SignedString(u.HmacSecret)
 	if err != nil {
 		return "", "", err
 	}
@@ -169,7 +169,7 @@ func (u *Users) generateTokens(ctx context.Context, userID int64) (string, strin
 		ExpiresAt: time.Now().Add(time.Hour * 24 * 30),
 	}
 
-	err = u.sessionRepo.Create(ctx, session)
+	err = u.SessionRepo.Create(ctx, session)
 	if err != nil {
 		return "", "", err
 	}
@@ -192,7 +192,7 @@ func newRefreshToken() (string, error) {
 }
 
 func (u *Users) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
-	session, err := u.sessionRepo.Get(ctx, refreshToken)
+	session, err := u.SessionRepo.Get(ctx, refreshToken)
 	if err != nil {
 		return "", "", err
 	}
