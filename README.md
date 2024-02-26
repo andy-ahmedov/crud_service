@@ -1,64 +1,51 @@
-# crud_service
+<h1 align="center">CRUD SERVICE 🐚</h1>
+<h4 align="center"> </h4>
 
- CRUD приложение для управления списком книг
+<p align="center">
+ <img alt="Github top language" src="https://img.shields.io/badge/C%20-95.8%25-brightgreen">
 
- Используемый стек на данный момент:
- 	golang
-  	docker
-   	makefile
+  <img alt="Github language count" src="https://img.shields.io/badge/languages-2-brightgreen">
 
-Фреймворки:
-	swagger
- 	gin
-  	gorilla
+  <img alt="Repository size" src="https://img.shields.io/badge/repo%20size-1.4MB-brightgreen">
 
- Должно быть:
+  <img alt="Success" src="https://img.shields.io/badge/success-101%25-brightgreen">
+</p>
 
-	Книжный репозиторий
-	Сервис книг
-	Rest Сервер
+<p align="center">
+  <a href="#about">About</a> &#xa0; | &#xa0;
+  <a href="#features">Features</a> &#xa0; | &#xa0;
+  <a href="#summary">What you should know (Summary)</a> &#xa0; | &#xa0;
+  <a href="#starting">Starting</a>
+</p>
 
-Book:
-	id int
-	titile string
-	author string
-	publishDate time.Time
-	rating int
+![minishell](https://i.imgur.com/z40TNtL.jpeg)
 
-UpdateBookInput:
-	titile string
-	author sttring
-	publishDate time.Time
-	rating int
+## About ##
 
-Ошибка: Book not found
+- Minishell is a project at school 42 and the instructions were given in the [subject](https://github.com/andy-ahmedov/minishell/en.subject.pdf).
 
-<pre>
-Book interface {
-	Create(ctx context.Context, book domain.Book) error
-	GetByID(ctx context.Context, id int64) (domain.Book, error)
-	GetAll(ctx context.Context) ([]domain.Book, error)
-	Delete(ctx context.Context, id int64) error
-	Update(ctx context.Context, id int64, inp domain.UpdateBookInput) error
-}
-</pre>
+- The objective of this project is to create a simple shell to learn a lot about processes and file descriptors.
 
-Handles:
-	createBook
-	getAllBooks
-	getBookByID
-	deleteBook
-	updateBook
+- The existence of shells is linked to the very existence of IT. At the time, all coders agreed that communicating with a computer using aligned 1/0 switches was seriously irritating. It was only logical that they came up with the idea to communicate with
+a computer using interactive lines of commands in a language somewhat close to english.
+With Minishell, you’ll be able to travel through time and come back to problems people faced when Windows didn’t exist.
 
-PSQL:
-	PostgresConnection
+## Features ##
 
-Структура проекта:
 
-	CMD - исполняемый файл
-	Internal:
-		Domain - описание структур
-		Repository/psql - создание структуры и ее методов для взаимодействия с базой данных
-		Service - Создание интерфейса и реализация ее методов используя наработки с Repository/psql
-		Transport/Rest - Инициализация маршрутизация и интеграция с интерфейсом + middleware
-	PKG - подключение к драйверу Базы Данных
+## Starting ##
+
+```bash
+# Clone this project
+$ git clone https://github.com/andy-ahmedov/minishell
+
+# Access
+$ cd minishell
+
+# Compile the project
+$ make
+
+# Run the project
+$ ./minishell
+
+```
