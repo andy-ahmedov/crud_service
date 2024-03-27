@@ -12,7 +12,6 @@
 
 ![minishell](https://i.imgur.com/jJxqbjv.png)
 
-
 ## ABOUT ##
 
 This is a service written in Go that provides a user-friendly interface for managing users and books via a REST API. The service supports user registration and authentication using JWT tokens, ensuring security and efficiency. The service provides the ability to create, update, delete and obtain information about books, access to which is limited to authenticated users.
